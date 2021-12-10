@@ -132,7 +132,7 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
                 # now update
                 setattr(calculated, attr, right)
         print("\n".ljust(120, "_"))  # separator
-        # todo: there is an issue with the volume, exchanges probably sending it cumulative for day
+        # tofix: there is an issue with the volume, it is probably sent cumulatively for the day
 
 
 def process_queue_item(item) -> None:
@@ -157,7 +157,7 @@ def process_queue_item(item) -> None:
 
 
 def process_queue() -> None:
-    """processed the queue"""
+    """processes the queue"""
     while True:  # run forever
         try:
             item = job_queue.get()
