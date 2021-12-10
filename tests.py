@@ -1,12 +1,12 @@
 from freezegun import freeze_time
 from datetime import datetime
 
-from main import get_candle_periods_for_trades, get_candle_periods_for_rest
+from main import get_candle_periods_for_trades, get_previous_candle_periods
 
 
 @freeze_time(datetime(2021, 12, 10, 11, 46, 3))
 def test_get_candle_periods_for_rest():
-    periods = list(get_candle_periods_for_rest())
+    periods = list(get_previous_candle_periods())
     assert len(periods) == 1
     period = periods[0]
     assert period["resolution"] == 60

@@ -53,7 +53,6 @@ def parse_input_and_subscribe_to_markets(input_str: str) -> None:
 
         get_or_create(session, Exchange, name=exchange_name, commit=True)  # add to db
         exchange_obj = exchange_cls(markets, job_queue)
-        exchange_obj.subscribe_to_trades()
         exchange_list.append(exchange_obj)
         print(f"Exchange: {exchange_name}. Markets: {markets}.")
 
@@ -62,7 +61,11 @@ item_count = 0
 
 
 def save_trade_and_update_candle(trade_dict: dict) -> None:
-    """save trades to the db and update all 3 candles: min, hour, day"""
+    """
+    save trades to the db and update all 3 candles: min, hour, day
+    the candle updated here is the one obtained via REST for the very first period
+    subsequent candles are started from the first trade received via WebSocket
+    """
     trade, _ = get_or_create(
         session, Trade,
         exchange_name=trade_dict["exchange"],
@@ -75,7 +78,7 @@ def save_trade_and_update_candle(trade_dict: dict) -> None:
     )
 
     # update candles
-    for period in get_candle_periods_for_trades(trade_dict["time"]):
+    for period in get_current_candle_periods(trade_dict["time"]):
         candle, created = get_or_create(
             session, Candle,
             exchange_name=trade.exchange_name,
@@ -83,10 +86,12 @@ def save_trade_and_update_candle(trade_dict: dict) -> None:
             start_time=period["start_time"].timestamp(),
             resolution=period["resolution"],
         )
-        candle.close = trade.price  # last trade will be effective / has to be b4 commit
-        if created:
+        candle.close = trade.price  # last trade will be effective
+        # ^ assignment needs to be before session.commit()
+        if created:  # start a candle
+            print("\na trade started a candle")
             candle.open = trade.price
-            session.commit()  # to get the default values which are at SQL side
+            session.commit()  # to get the default values which are at the SQL side
         candle.volume += trade.size
         candle.low = min(candle.low, trade.price)
         candle.high = max(candle.high, trade.price)
@@ -101,7 +106,7 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
         resolution=received["resolution"],
     ).first()
     if calculated is None:
-        print("!! Calculated candle CANNOT be found, saving received !!")
+        print("No trades prior to the received candles, nothing to compare!!")
         get_or_create(
             session, Candle,
             exchange_name=received["exchange"],
@@ -167,8 +172,10 @@ def process_queue() -> None:
             time_module.sleep(0.1)
 
 
-def get_candle_periods_for_trades(time: datetime) -> Generator[dict, None, None]:
+def get_current_candle_periods(time: datetime) -> Generator[dict, None, None]:
     """
+    primarily for determining the periods of the trades coming in via websocket
+    but is used for pulling candles via REST for its very initial pull
     when trades coming in, this will tell us which local candles to update
     brings the start time of min, hour, day that we are currently in, not over.
     will always return all three of min, hour, day
@@ -184,12 +191,11 @@ def get_candle_periods_for_trades(time: datetime) -> Generator[dict, None, None]
     yield {"start_time": time, "resolution": 86_400}
 
 
-def get_candle_periods_for_rest() -> Generator[dict, None, None]:  # i.e. min, hour, day
+def get_turned_candle_periods(time) -> Generator[dict, None, None]:  # i.e. min, hour, day
     """
-    used to pull candles from the REST API
-    brings the start time of min, hour, day that is just over; see -1's below
+    used to pull candles from the REST API (except the very first pull, see ^)
+    brings the start time of min, hour, day that has just turned; see -1's below
     """
-    time = datetime.now(timezone.utc)
     print(f"{'Now: '.ljust(50)}: {time}")
 
     time = time.replace(second=0, microsecond=0)  # 11:46:03 => 11:46:00
@@ -213,14 +219,28 @@ def get_candle_periods_for_rest() -> Generator[dict, None, None]:  # i.e. min, h
             yield {"start_time": day_start_time, "resolution": 86_400}
 
 
-def get_candles() -> None:
+def get_candles(first_time: bool = False) -> None:
     """
     gets the candles, by means of exchanges, and puts them in the job queue that we also put trades
     this is for them to be processed after all the trades received before them
     """
-    delay_get_candles(60)  # schedule next run for after 60 secs
+    # schedule next run first
+    now = datetime.now(timezone.utc)
+    if first_time:
+        # wait until the minute to be over + few secs offset
+        delay = 60 - now.second + DELAY_SECONDS_FROM_MINUTE  # in secs
+        print(f"now: {now}")
+        print(f"next candles will be get after {delay} seconds")
+    else:
+        delay = 60  # a min
+
+    delay_get_candles(delay)  # schedule next run
+
+    periods = get_current_candle_periods(now) if first_time else get_turned_candle_periods(now)
+    # i.e. min, hour, day
+
     print("\n" + "Getting candles via REST".rjust(120, "_"))
-    for period in get_candle_periods_for_rest():  # i.e. min, hour, day
+    for period in periods:
         for exchange in exchange_list:
             exchange.get_candle(
                 start_time=period["start_time"],
@@ -230,11 +250,6 @@ def get_candles() -> None:
 
 def delay_get_candles(delay: int = None) -> None:
     """ candles will be received at the turn of each period: min, hr, day + few secs of offset """
-    if delay is None:  # wait for the minute to be over + few secs offset
-        now = datetime.now(timezone.utc)
-        delay = 60 - now.second + DELAY_SECONDS_FROM_MINUTE
-        print(f"now: {now}")
-        print(f"delaying getting first set of candles by {delay} seconds")
     threading.Timer(delay, get_candles).start()
 
 
@@ -247,4 +262,8 @@ if __name__ == "__main__":
     # could be replaced with ThreadPoolExecutor if 1 Thread is not enough
     Thread(target=process_queue).start()
 
-    delay_get_candles()  # will reschedule itself for a minute later
+    get_candles(first_time=True)
+    # will reschedule itself to the turn of the minute first time, and a min thereafter
+
+    for exchange in exchange_list:
+        exchange.subscribe_to_trades()  # after getting the initial trades

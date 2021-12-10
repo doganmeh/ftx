@@ -11,7 +11,7 @@ setup:
 reset:
 	pipenv run python db.py
 
-run:
+run: reset
 	python main.py FTX:BTC-PERP
 
 test:
