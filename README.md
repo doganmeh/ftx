@@ -21,7 +21,7 @@ be careful about the quote marks
 * Trade executions (assume multiple trading pairs and exchanges) Trade execution example
 * Aggregated historical trade data, “candles” (assume multiple trading pairs, exchanges and intervals) Candle example
 
-###Write a solution that accomplishes the following:
+### Write a solution that accomplishes the following:
 * Fetches historical data for the BTC-PERP pair from FTX’s REST API for the following intervals:
   - 1 minute
   - 1 hour
@@ -30,6 +30,6 @@ be careful about the quote marks
 * Saves historical data across the three intervals to the tables outlined above.
 * Updates the most recent candle (most recent minute, hour and day) with trade executions provided by FTX’s Websocket stream. In other words, the historical values obtained via the REST API should be updated after they have been collected with real-time data published over the Websocket. At the turn of the most recent period, the intervals should match what is subsequently provided via the REST API - If not, then log the deltas (the difference between your own candle and the one provided by the exchange).
   
-###Bonus
+### Bonus
  * Record open interest at close of each interval.
  * Resources
