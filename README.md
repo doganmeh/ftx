@@ -18,8 +18,8 @@ be careful about the quote marks
 
 ### Create SQL tables to store the following data:
 
-* Trade executions (assume multiple trading pairs and exchanges) Trade execution example
-* Aggregated historical trade data, “candles” (assume multiple trading pairs, exchanges and intervals) Candle example
+* Trade executions (assume multiple trading pairs and exchanges) [Trade execution example](https://docs.ftx.com/#get-trades)
+* Aggregated historical trade data, “candles” (assume multiple trading pairs, exchanges and intervals) [Candle example](https://docs.ftx.com/#get-historical-prices)
 
 ### Write a solution that accomplishes the following:
 * Fetches historical data for the BTC-PERP pair from FTX’s REST API for the following intervals:
