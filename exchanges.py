@@ -55,15 +55,15 @@ class Ftx:
 
     def get_candle(self, resolution: int, start_time: float):
         """get candles for all markets for the given period and put them in the queue"""
-        start_time = start_time.timestamp()
+        time_stamp = start_time.timestamp()
         for market in self.markets:
-            candles = self.rest.get_candles(market, resolution, start_time)
+            candles = self.rest.get_candles(market, resolution, time_stamp)
             # yeah, sometimes more than 1
 
             count = 0
             for candle in candles:
                 candle["time"] = candle["time"] / 1000  # comes in milliseconds
-                if candle["time"] == start_time:
+                if candle["time"] == time_stamp:
                     candle["market"] = market
                     candle["resolution"] = resolution
                     candle["exchange"] = self.name
@@ -76,4 +76,5 @@ class Ftx:
                 print("EXCEPTION: server delivered other than just 1 candle")
                 print(f"candles {candles}")
                 print(f"start_time {start_time}")
+                print(f"resolution {resolution}")
                 print("*" * 100, "candle pulled")

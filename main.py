@@ -31,6 +31,7 @@ session = Session()
 # TODO:
 #  - more unit tests
 #  - load tests
+#  - notify the user if services are down
 
 
 def parse_input(input_str: str) -> Generator[Tuple[str, list], None, None]:
