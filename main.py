@@ -108,11 +108,11 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
             market=received["market"],
             start_time=received["time"],
             resolution=received["resolution"],
-            price=received["price"],
-            side=received["side"],
-            size=received["size"],
-            time=received["time"].timestamp(),
-            volume=received["volume"].timestamp(),
+            open=received["open"],
+            close=received["close"],
+            low=received["low"],
+            high=received["high"],
+            volume=received["volume"],
         )
     else:
         print("\n" + f"comparing candles received to calculated "
