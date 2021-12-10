@@ -138,6 +138,7 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
                 setattr(calculated, attr, right)
         print("\n".ljust(120, "_"))  # separator
         # tofix: there is an issue with the volume, it is probably sent cumulatively for the day
+        #        (transferring from the previous candle would fix it)
 
 
 def process_queue_item(item) -> None:
@@ -230,7 +231,8 @@ def get_candles(first_time: bool = False) -> None:
         # wait until the minute to be over + few secs offset
         delay = 60 - now.second + DELAY_SECONDS_FROM_MINUTE  # in secs
         print(f"now: {now}")
-        print(f"next candles will be get after {delay} seconds")
+        print(f"next candles will be get after {delay} seconds "
+              f"({DELAY_SECONDS_FROM_MINUTE} secs offset)")
     else:
         delay = 60  # a min
 
@@ -241,8 +243,8 @@ def get_candles(first_time: bool = False) -> None:
 
     print("\n" + "Getting candles via REST".rjust(120, "_"))
     for period in periods:
-        for exchange in exchange_list:
-            exchange.get_candle(
+        for exch in exchange_list:
+            exch.get_candle(
                 start_time=period["start_time"],
                 resolution=period["resolution"],
             )
