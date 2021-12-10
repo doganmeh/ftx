@@ -1,0 +1,10 @@
+[packages]
+websocket-client = '*'
+requests = '*'
+gevent = '*'
+ciso8601 = '*'
+sqlalchemy = '*'
+make = '*'
+pytest = '*'
+freezegun = '*'
+
