@@ -123,10 +123,12 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
     else:
         print("\n" + f"comparing candles received to calculated "
                      f"(resolution {calculated.resolution})".rjust(120, "_"))
+        discrepancy_found = False
         for attr in ["open", "close", "high", "low", "volume", ]:
             left = getattr(calculated, attr)
             right = received[attr]
             if not left == right:
+                discrepancy_found = True
                 # print a report
                 abs_diff = round(abs(left - right), 3)
                 left_vs_right = f"{round(left, 3)} vs {round(right, 3)}"
@@ -137,6 +139,8 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
                       f", {str(percent_diff).ljust(8)} %")
                 # now update
                 setattr(calculated, attr, right)
+        if not discrepancy_found:
+            print("Cool! No discrepancy found.")
         print("\n".ljust(120, "_"))  # separator
         # tofix: there is an issue with the volume, it is probably sent cumulatively for the day
         #        (transferring from the previous candle would fix it)
