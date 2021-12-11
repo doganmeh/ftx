@@ -75,6 +75,6 @@ class Ftx:
                 print("\n", "*" * 100, "candle pulled")
                 print("EXCEPTION: server delivered other than just 1 candle")
                 print(f"candles {candles}")
-                print(f"start_time {start_time}")
+                print(f"start_time: {start_time}, time_stamp: {time_stamp}")
                 print(f"resolution {resolution}")
                 print("*" * 100, "candle pulled")

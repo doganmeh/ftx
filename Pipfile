@@ -6,5 +6,4 @@ ciso8601 = '*'
 sqlalchemy = '*'
 make = '*'
 pytest = '*'
-freezegun = '*'
 
