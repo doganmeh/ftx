@@ -31,7 +31,7 @@ session = Session()
 # TODO:
 #  - more unit tests
 #  - load tests
-#  - notify the user if services are down
+#  - use logging instead of print
 
 
 def parse_input(input_str: str) -> Generator[Tuple[str, list], None, None]:
@@ -142,8 +142,7 @@ def save_candle_received_and_compare_with_calculated(received: dict) -> None:
         if not discrepancy_found:
             print("Cool! No discrepancy found.")
         print("\n".ljust(120, "_"))  # separator
-        # tofix: there is an issue with the volume, it is probably sent cumulatively for the day
-        #        (transferring from the previous candle would fix it)
+        # tofix: issue with the volume
 
 
 def process_queue_item(item) -> None:
@@ -163,7 +162,7 @@ def process_queue_item(item) -> None:
         print("t", end="", flush=True)
 
     if item_count % COMMIT_EVERY_N_OBJECT == 0:
-        print(" - committing objects to db..")
+        print(" - committing trades to db..")
         session.commit()
 
 
