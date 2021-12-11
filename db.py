@@ -75,13 +75,17 @@ class Candle(Base):  # historical prices
     )
 
 
-def get_or_create(session, model, commit=False, **kwargs):
+def get_or_create(session, model, commit=False, update=None, **kwargs):
     """return instance, created"""
     instance = session.query(model).filter_by(**kwargs).first()
     if instance:
+        if update:
+            for key, value in update.items():
+                setattr(instance, key, value)
         return instance, False
     else:
-        instance = model(**kwargs)
+        update = update if update else {}
+        instance = model(**kwargs, **update)
         session.add(instance)
         if commit:
             session.commit()
