@@ -93,7 +93,7 @@ def save_trade_and_update_candle(trade_dict: dict) -> None:
             print("\na trade started a candle")
             candle.open = trade.price
             session.commit()  # to get the default values which are at the SQL side
-        candle.volume += trade.size
+        candle.volume += trade.size * trade.price
         candle.low = min(candle.low, trade.price)
         candle.high = max(candle.high, trade.price)
 
